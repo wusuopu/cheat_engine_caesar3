@@ -159,6 +159,43 @@ def update_granary(hProcess, base_addr, sysinfo):
     # cheat_engine.write_process(hProcess, addr+10, 50, 2)
 
 
+def update_money(hProcess, sysinfo):
+    """
+    个人金钱加5000
+    """
+    addr = PERSON_MONEY_ADDRESS
+    mem_info = cheat_engine.query_virtual(hProcess, addr)
+    if not mem_info:
+        os._exit(1)
+
+    try:
+        value = cheat_engine.read_process(hProcess, addr, 4)
+    except Exception:
+        return
+    value += 5000
+    cheat_engine.write_process(hProcess, addr, value, 4)
+
+
+def update_indicator(hProcess, sysinfo):
+    """
+    四项评比指标全加10
+    """
+    addr = RATING_ITEMS[0]
+    mem_info = cheat_engine.query_virtual(hProcess, addr)
+    if not mem_info:
+        os._exit(1)
+
+    for addr in RATING_ITEMS:
+        try:
+            value = cheat_engine.read_process(hProcess, addr, 2)
+        except Exception:
+            continue
+        value += 10
+        if value > 100:
+            value = 100
+        cheat_engine.write_process(hProcess, addr, value, 2)
+
+
 def freeze_mem(hProcess, info):
     """
     锁定内存：定时修改内存的值
@@ -175,10 +212,12 @@ def freeze_mem(hProcess, info):
 
 
 def print_help():
-    print 'c - Clear'
-    print 'q - Quit'
-    print 's - Scan'
-    print 'h - Help'
+    print u'c - 清除扫描结果'
+    print u'p - 个人金钱加5000'
+    print u's - 查找所有的市场与粮仓内存'
+    print u'u - 四项评比指标全加10'
+    print u'q - 退出'
+    print u'h - 查看该帮助'
 
 
 def main():
@@ -213,13 +252,17 @@ def main():
         if op == 'q':
             cheat_engine.close_process(hProcess)
             os._exit(1)
+        elif op == 'h':
+            print_help()
         elif op == 'c':
             ALL_MARKET_ADDRESSES = []
             ALL_GRANARY_ADDRESSES = []
+        elif op == 'p':
+            update_money(hProcess, info)
+        elif op == 'u':
+            update_indicator(hProcess, info)
         elif op == 's':
             list_market_and_granary(hProcess, info)
-        elif op == 'h':
-            print_help()
 
     cheat_engine.close_process(hProcess)
 
