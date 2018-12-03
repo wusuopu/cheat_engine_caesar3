@@ -4,6 +4,7 @@
 import ctypes
 import ctypes.wintypes
 import os
+import struct
 
 # https://msdn.microsoft.com/en-us/library/aa383751#DWORD_PTR
 if ctypes.sizeof(ctypes.c_void_p) == ctypes.sizeof(ctypes.c_ulonglong):
@@ -22,6 +23,34 @@ PROCESS_VM_WRITE = 0x0020
 
 def print_error(name):
     print name, ctypes.WinError(ctypes.get_last_error())
+
+
+def float_to_hex(number):
+    """
+    将单浮点数转为16进制
+    """
+    return struct.unpack('<I', struct.pack('<f', number))[0]
+
+
+def double_to_hex(number):
+    """
+    将双浮点数转为16进制
+    """
+    return struct.unpack('<Q', struct.pack('<d', number))[0]
+
+
+def hex_to_float(hex_number):
+    """
+    将16进制转为单浮点数
+    """
+    return struct.unpack('<f', struct.pack('<I', hex_number))[0]
+
+
+def hex_to_double(hex_number):
+    """
+    将16进制转为双浮点数
+    """
+    return struct.unpack('<d', struct.pack('<Q', hex_number))[0]
 
 
 def get_process_info(pid):
@@ -182,8 +211,10 @@ def read_process(hProcess, base_addr, byte_num=2):
         buf = ctypes.c_short()
     elif byte_num == 4:
         buf = ctypes.c_int32()
-    else:
+    elif byte_num == 8:
         buf = ctypes.c_int64()
+    else:
+        buf = ctypes.c_buffer('', byte_num)
 
     nread = SIZE_T()
     ret = ctypes.windll.kernel32.ReadProcessMemory(
@@ -197,7 +228,7 @@ def read_process(hProcess, base_addr, byte_num=2):
         print_error('ReadProcessMemory')
         raise Exception('ReadProcessMemory')
 
-    return buf.value
+    return getattr(buf, 'raw', buf.value)
 
 
 def write_process(hProcess, base_addr, value, byte_num=2):
